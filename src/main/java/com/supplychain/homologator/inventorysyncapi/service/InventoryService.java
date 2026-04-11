@@ -4,10 +4,13 @@ import com.supplychain.homologator.inventorysyncapi.domain.Product;
 import com.supplychain.homologator.inventorysyncapi.dto.DummyJSONProductDTO;
 import com.supplychain.homologator.inventorysyncapi.dto.DummyJSONResponseDTO;
 import com.supplychain.homologator.inventorysyncapi.dto.FakeStoreProductDTO;
+import com.supplychain.homologator.inventorysyncapi.dto.ProductFilter;
+import com.supplychain.homologator.inventorysyncapi.dto.ProductResponseDTO;
 import com.supplychain.homologator.inventorysyncapi.repository.ProductRepository;
+import com.supplychain.homologator.inventorysyncapi.repository.ProductSpecification;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -16,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
 
 @Slf4j
 @Service
@@ -98,8 +102,7 @@ public class InventoryService {
     }
     
     private Product mapFakeStoreToProduct(FakeStoreProductDTO dto) {
-        // FakeStore no tiene stock — asumimos 0 y marcamos auditStock = true
-        // Esto es exactamente lo que el challenge pide
+       
         log.warn("Product FS_{} has no real stock, defaulting to 0", dto.id());
 
         return Product.builder()
@@ -114,20 +117,48 @@ public class InventoryService {
                 .provider("ProviderA")
                 .lastSync(LocalDateTime.now())
                 .build();
-    }
+    }    
     
-    private Product mapDummyJsonToProduct(DummyJSONProductDTO dto) {
+     private Product mapDummyJsonToProduct(DummyJSONProductDTO dto) {
         return Product.builder()
                 .internalId("DJ_" + dto.id())
                 .title(dto.title())
                 .description(dto.description())
                 .price(dto.price())
-                .rating(dto.rating())                
+                .rating(dto.rating())
                 .stock(dto.stock() != null ? dto.stock() : 0)
-                .auditStock(false)                              
+                .auditStock(false)
                 .category(dto.category())
                 .provider("ProviderB")
                 .lastSync(LocalDateTime.now())
                 .build();
+    }
+    
+    public List<ProductResponseDTO> getProducts(ProductFilter filter) {
+        return productRepository
+                .findAll(ProductSpecification.withFilters(filter))
+                .stream()
+                .map(ProductResponseDTO::from)
+                .toList();
+    }
+
+    public int restockZeros(Integer newStock) {
+        List<Product> zeroStockProducts = productRepository
+                .findAll()
+                .stream()
+                .filter(p -> p.getStock() == 0)
+                .toList();
+
+        if (zeroStockProducts.isEmpty()) {
+            log.info("No products with zero stock found");
+            return 0;
+        }
+
+        zeroStockProducts.forEach(p -> p.setStock(newStock));
+        productRepository.saveAll(zeroStockProducts);
+
+        log.info("Updated {} products from stock 0 to {}",
+                zeroStockProducts.size(), newStock);
+        return zeroStockProducts.size();
     }
 }
