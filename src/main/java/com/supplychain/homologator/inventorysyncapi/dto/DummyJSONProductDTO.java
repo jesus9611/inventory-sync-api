@@ -5,7 +5,7 @@ public record DummyJSONProductDTO(
     String title,
     String description,
     Double price,
-    Double rating,
+    Double rating, 
     Integer stock,
     String category,
     String brand
