@@ -1,4 +1,4 @@
-package com.supplychain.homologator.inventory_sync_api.domain;
+package com.supplychain.homologator.inventorysyncapi.domain;
 
 import jakarta.persistence.*;
 import lombok.*;

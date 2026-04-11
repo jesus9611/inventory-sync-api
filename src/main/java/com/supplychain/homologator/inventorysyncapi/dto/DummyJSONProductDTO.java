@@ -1,4 +1,4 @@
-package com.supplychain.homologator.inventory_sync_api.dto;
+package com.supplychain.homologator.inventorysyncapi.dto;
 
 public record DummyJSONProductDTO(
     Long id,

@@ -1,4 +1,4 @@
-package com.supplychain.homologator.inventory_sync_api;
+package com.supplychain.homologator.inventorysyncapi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
