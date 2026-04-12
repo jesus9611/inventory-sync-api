@@ -25,14 +25,14 @@ class InventoryControllerTest {
 
     @Test
     void shouldRestockZerosSuccessfully() {
-        // Arrange
+        
         when(inventoryService.restockZeros(10)).thenReturn(5);
 
-        // Act
+    
         ResponseEntity<?> response = inventoryController.restockZeros(
               Map.of("newStock", 10));
 
-        // Assert
+        
         assertThat(response.getStatusCode().value()).isEqualTo(200);
     }
 }

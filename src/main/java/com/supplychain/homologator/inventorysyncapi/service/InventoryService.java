@@ -108,11 +108,7 @@ public class InventoryService {
     }
     
     public int restockZeros(Integer newStock) {
-        List<Product> zeroStockProducts = productRepository
-                .findAll()
-                .stream()
-                .filter(p -> p.getStock() == 0)
-                .toList();
+        List<Product> zeroStockProducts = productRepository.findByStock(0);
 
         if (zeroStockProducts.isEmpty()) {
             log.info("No products with zero stock found");
