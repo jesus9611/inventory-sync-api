@@ -2,6 +2,7 @@ package com.supplychain.homologator.inventorysyncapi.controller;
 
 import com.supplychain.homologator.inventorysyncapi.dto.ProductFilter;
 import com.supplychain.homologator.inventorysyncapi.dto.ProductResponseDTO;
+import com.supplychain.homologator.inventorysyncapi.dto.RestockRequest;
 import com.supplychain.homologator.inventorysyncapi.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class InventoryController {
 
     private final InventoryService inventoryService;
-   
+
     @GetMapping
     public ResponseEntity<List<ProductResponseDTO>> getInventory(
             @RequestParam(required = false) Double minRating,
@@ -27,7 +28,7 @@ public class InventoryController {
     ) {
         log.info("GET /api/v1/inventory - filters: minRating={}, maxPrice={}, minStock={}, provider={}",
                 minRating, maxPrice, minStock, provider);
-       
+
         ProductFilter filter = new ProductFilter(minRating, maxPrice, minStock, provider);
 
         List<ProductResponseDTO> products = inventoryService.getProducts(filter);
@@ -37,14 +38,14 @@ public class InventoryController {
 
     @PatchMapping("/restock-zeros")
     public ResponseEntity<Map<String, Object>> restockZeros(
-            @RequestBody Map<String, Integer> body
+            @RequestBody RestockRequest request
     ) {
-        Integer newStock = body.get("newStock");
+        Integer newStock = request.newStock();
 
-        if (newStock == null || newStock < 0) {
+        if (newStock == null || newStock <= 0) {
             return ResponseEntity.badRequest()
                     .body(Map.of(
-                        "error", "newStock must be a positive number"
+                            "error", "newStock must be greater than 0"
                     ));
         }
 
@@ -58,7 +59,7 @@ public class InventoryController {
                 "newStockValue", newStock
         ));
     }
-   
+
     @PostMapping("/sync")
     public ResponseEntity<Map<String, String>> triggerSync() {
         log.info("Manual sync triggered");

@@ -13,10 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -33,10 +33,18 @@ public class InventoryService {
         log.info("Starting inventory sync at {}", LocalDateTime.now());
         
         CompletableFuture<Void> fakeStoreSync = CompletableFuture
-                .runAsync(this::syncFromFakeStore);
+        .runAsync(this::syncFromFakeStore)
+        .exceptionally(ex -> {
+            log.error("Error syncing FakeStore: {}", ex.getMessage());
+            return null;
+        });
 
-        CompletableFuture<Void> dummyJsonSync = CompletableFuture
-                .runAsync(this::syncFromDummyJSON);
+CompletableFuture<Void> dummyJsonSync = CompletableFuture
+        .runAsync(this::syncFromDummyJSON)
+        .exceptionally(ex -> {
+            log.error("Error syncing DummyJSON: {}", ex.getMessage());
+            return null;
+        });
         
         CompletableFuture.allOf(fakeStoreSync, dummyJsonSync).join();
 
@@ -50,7 +58,7 @@ public class InventoryService {
                 .toList();
 
         if (!products.isEmpty()) {
-            productRepository.saveAll(products);
+            saveOrUpdateProducts(products);
             log.info("Saved {} products from FakeStore", products.size());
         }
     }
@@ -62,7 +70,7 @@ public class InventoryService {
                 .toList();
 
         if (!products.isEmpty()) {
-            productRepository.saveAll(products);
+            saveOrUpdateProducts(products);
             log.info("Saved {} products from DummyJSON", products.size());
         }
     }
@@ -107,19 +115,34 @@ public class InventoryService {
                 .toList();
     }
     
-    public int restockZeros(Integer newStock) {
-        List<Product> zeroStockProducts = productRepository.findByStock(0);
+   @Transactional
+public int restockZeros(Integer newStock) {
 
-        if (zeroStockProducts.isEmpty()) {
-            log.info("No products with zero stock found");
-            return 0;
-        }
+    if (newStock == null || newStock <= 0) {
+    log.error("Invalid newStock value: {}", newStock);
+    throw new IllegalArgumentException("newStock must be greater than 0");
+}
 
-        zeroStockProducts.forEach(p -> p.setStock(newStock));
-        productRepository.saveAll(zeroStockProducts);
+    int updated = productRepository.updateStockForZero(newStock);
 
-        log.info("Updated {} products from stock 0 to {}",
-                zeroStockProducts.size(), newStock);
-        return zeroStockProducts.size();
+    log.info("Updated {} products from stock 0 to {}",
+            updated, newStock);
+
+    return updated;
+}
+private void saveOrUpdateProducts(List<Product> products) {
+    for (Product product : products) {
+        productRepository.findByInternalId(product.getInternalId())
+                .ifPresentOrElse(existing -> {
+                    existing.setTitle(product.getTitle());
+                    existing.setDescription(product.getDescription());
+                    existing.setPrice(product.getPrice());
+                    existing.setRating(product.getRating());
+                    existing.setStock(product.getStock());
+                    existing.setCategory(product.getCategory());
+                    existing.setLastSync(product.getLastSync());
+                    productRepository.save(existing);
+                }, () -> productRepository.save(product));
     }
+}
 }

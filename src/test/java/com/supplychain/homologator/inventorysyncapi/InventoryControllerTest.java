@@ -8,11 +8,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import com.supplychain.homologator.inventorysyncapi.dto.RestockRequest;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryControllerTest {
@@ -30,7 +28,7 @@ class InventoryControllerTest {
 
     
         ResponseEntity<?> response = inventoryController.restockZeros(
-              Map.of("newStock", 10));
+    new RestockRequest(10));
 
         
         assertThat(response.getStatusCode().value()).isEqualTo(200);
