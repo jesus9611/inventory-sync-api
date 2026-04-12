@@ -10,8 +10,9 @@ A middleware microservice that orchestrates product data from two external provi
 * Parallel data ingestion using CompletableFuture
 * Graceful degradation when a provider fails
 * Canonical data model normalization
+* Idempotent persistence to prevent duplicates
 * Dynamic filtering at database level (JPA Specifications)
-* Bulk stock update endpoint
+* Bulk stock update endpoint using database-level operations
 
 ---
 
@@ -30,6 +31,7 @@ A middleware microservice that orchestrates product data from two external provi
          │   InventoryService  │
          │  - Homologation     │
          │  - Cron Job (10min) │
+         │  - Idempotent Sync  │
          └──────────┬──────────┘
                     │
                     ▼
@@ -51,13 +53,13 @@ A middleware microservice that orchestrates product data from two external provi
 
 ## Tech Stack
 
-* **Java 21**
-* **Spring Boot 3.3.5**
-* **Spring Data JPA (Hibernate)**
-* **PostgreSQL** (production) / **H2** (local)
-* **Docker & Docker Compose**
-* **Lombok**
-* **JUnit 5 & Mockito**
+* Java 21
+* Spring Boot 3.3.5
+* Spring Data JPA (Hibernate)
+* PostgreSQL (production) / H2 (local)
+* Docker & Docker Compose
+* Lombok
+* JUnit 5 & Mockito
 
 ---
 
@@ -77,9 +79,7 @@ docker compose up --build
 
 API available at:
 
-```
 http://localhost:8080
-```
 
 ---
 
@@ -106,7 +106,7 @@ curl "http://localhost:8080/api/v1/inventory?minRating=4.0&maxPrice=50&provider=
 
 ### PATCH /api/v1/inventory/restock-zeros
 
-Updates all products with stock = 0
+Updates all products with stock = 0 using a database-level bulk operation.
 
 ```bash
 curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
@@ -118,7 +118,7 @@ curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
 
 ### POST /api/v1/inventory/sync
 
-Triggers manual sync
+Triggers manual sync.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/inventory/sync
@@ -126,34 +126,99 @@ curl -X POST http://localhost:8080/api/v1/inventory/sync
 
 ---
 
+## How to Test the API
+
+You can test the API using curl or Postman.
+
+Example workflow:
+
+1. Trigger a manual sync:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/inventory/sync
+```
+
+2. Retrieve products:
+
+```bash
+curl http://localhost:8080/api/v1/inventory
+```
+
+3. Apply filters:
+
+```bash
+curl "http://localhost:8080/api/v1/inventory?minRating=4.0"
+```
+
+4. Restock products with zero stock:
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
+  -H "Content-Type: application/json" \
+  -d '{"newStock": 10}'
+```
+
+---
+
 ## Technical Decisions
+
+### Idempotent Sync Strategy
+
+The synchronization process ensures no duplicate records by using a unique internalId.
+
+* Existing products → updated
+* New products → inserted
+
+This ensures the sync process is safe to run multiple times without side effects.
+
+---
 
 ### Dynamic Filtering (JPA Specifications)
 
-Filtering is executed at database level using `JpaSpecificationExecutor` to avoid loading unnecessary data into memory.
+Filtering is executed at database level using JpaSpecificationExecutor, avoiding in-memory processing.
+
+---
 
 ### Parallel Processing
 
-Used `CompletableFuture` to call providers concurrently, improving performance and reducing total sync time.
+Used CompletableFuture to call providers concurrently, reducing execution time.
+
+---
 
 ### Resilience (Graceful Degradation)
 
-If one provider fails, the system continues processing the available data source.
+Failures are handled using exceptionally(), allowing the system to continue processing.
 
-### Client Abstraction
+---
 
-Each provider has its own client class, ensuring separation of concerns and testability.
+### Database Efficiency
+
+Bulk updates (restock) use @Modifying queries directly in the database.
+
+---
 
 ### Canonical ID Strategy
 
-* Provider A → `FS_{id}`
-* Provider B → `DJ_{id}`
+* Provider A → FS_{id}
+* Provider B → DJ_{id}
 
-Prevents ID collisions.
+---
 
-### Audit Stock Handling
+### Audit Handling
 
-Provider A has no stock → defaults to `0` and is flagged with `auditStock = true`.
+Provider A does not provide stock:
+
+* Default = 0
+* auditStock = true
+* Logged for traceability
+
+---
+
+## Assumptions
+
+* External provider APIs may fail intermittently
+* Product IDs are unique within each provider
+* Data consistency is prioritized over real-time synchronization
 
 ---
 
@@ -161,29 +226,26 @@ Provider A has no stock → defaults to `0` and is flagged with `auditStock = tr
 
 * Separation of concerns
 * Resilient system design
+* Idempotent data processing
 * Scalable querying strategy
-* Clean architecture with DTO/domain separation
+* Clean architecture
 
 ---
 
 ## Testing
 
-Run tests:
-
 ```bash
 mvn clean test
 ```
-
-Includes unit tests using Mockito for service layer validation.
 
 ---
 
 ## Future Improvements
 
-* Swagger / OpenAPI documentation
+* Swagger / OpenAPI
 * Redis caching
-* CI/CD pipeline (GitHub Actions)
-* Kafka event-driven architecture
+* CI/CD (GitHub Actions)
+* Kafka
 * Integration tests
 
 ---
