@@ -7,57 +7,56 @@ A middleware microservice that orchestrates product data from two external provi
 ## Key Features
 
 * Scheduled inventory synchronization every 10 minutes
-* Parallel data ingestion using CompletableFuture
+* Parallel data ingestion using CompletableFuture with a dedicated thread pool
 * Graceful degradation when a provider fails
 * Canonical data model normalization
 * Idempotent persistence to prevent duplicates
 * Dynamic filtering at database level (JPA Specifications)
 * Bulk stock update endpoint using database-level operations
+* OpenAPI / Swagger UI documentation
 
 ---
 
 ## Architecture Overview
-
-```
 ┌─────────────────┐     ┌─────────────────┐
 │  FakeStore API  │     │  DummyJSON API  │
 │ (Provider A)    │     │  (Provider B)   │
 └────────┬────────┘     └────────┬────────┘
-         │                       │
-         └──────────┬────────────┘
-                    │ Parallel calls (CompletableFuture)
-                    ▼
-         ┌─────────────────────┐
-         │   InventoryService  │
-         │  - Homologation     │
-         │  - Cron Job (10min) │
-         │  - Idempotent Sync  │
-         └──────────┬──────────┘
-                    │
-                    ▼
-         ┌─────────────────────┐
-         │     PostgreSQL      │
-         │  (products table)   │
-         └──────────┬──────────┘
-                    │
-                    ▼
-         ┌─────────────────────┐
-         │   REST API          │
-         │  GET  /inventory    │
-         │  PATCH /restock     │
-         │  POST  /sync        │
-         └─────────────────────┘
-```
+│                       │
+└──────────┬────────────┘
+│ Parallel calls (CompletableFuture)
+▼
+┌─────────────────────┐
+│   InventoryService  │
+│  - Homologation     │
+│  - Cron Job (10min) │
+│  - Idempotent Sync  │
+└──────────┬──────────┘
+│
+▼
+┌─────────────────────┐
+│     PostgreSQL      │
+│  (products table)   │
+└──────────┬──────────┘
+│
+▼
+┌─────────────────────┐
+│   REST API          │
+│  GET  /inventory    │
+│  PATCH /restock     │
+│  POST  /sync        │
+└─────────────────────┘
 
 ---
 
 ## Tech Stack
 
 * Java 21
-* Spring Boot 3.3.5
+* Spring Boot 3.5.x
 * Spring Data JPA (Hibernate)
-* PostgreSQL (production) / H2 (local)
+* PostgreSQL (Docker) / H2 (local)
 * Docker & Docker Compose
+* Springdoc OpenAPI 2.8.x
 * Lombok
 * JUnit 5 & Mockito
 
@@ -77,9 +76,48 @@ cd inventory-sync-api
 docker compose up --build
 ```
 
-API available at:
+API available at: `http://localhost:8080`
 
-http://localhost:8080
+Swagger UI available at: `http://localhost:8080/swagger-ui/index.html`
+
+---
+
+## Quick Test (for recruiters)
+
+Once the app is running with Docker, follow these steps to verify everything works:
+
+**1. Trigger a manual sync to populate the database:**
+```bash
+curl -X POST http://localhost:8080/api/v1/inventory/sync
+```
+Expected response:
+```json
+{"message": "Sync completed successfully"}
+```
+
+**2. Query all products:**
+```bash
+curl http://localhost:8080/api/v1/inventory
+```
+Expected response: a JSON array with products from both ProviderA (FS_) and ProviderB (DJ_).
+
+**3. Filter by provider and rating:**
+```bash
+curl "http://localhost:8080/api/v1/inventory?provider=ProviderA&minRating=3.5"
+```
+
+**4. Restock all zero-stock products:**
+```bash
+curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
+  -H "Content-Type: application/json" \
+  -d '{"newStock": 10}'
+```
+Expected response:
+```json
+{"message": "Stock updated successfully", "productsUpdated": 20, "newStockValue": 10}
+```
+
+Or explore everything interactively via Swagger UI at `http://localhost:8080/swagger-ui/index.html`
 
 ---
 
@@ -96,13 +134,9 @@ Returns all products with optional filters.
 | minStock  | Integer | Minimum stock          |
 | provider  | String  | ProviderA or ProviderB |
 
-Example:
-
 ```bash
 curl "http://localhost:8080/api/v1/inventory?minRating=4.0&maxPrice=50&provider=ProviderB"
 ```
-
----
 
 ### PATCH /api/v1/inventory/restock-zeros
 
@@ -114,48 +148,12 @@ curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
   -d '{"newStock": 10}'
 ```
 
----
-
 ### POST /api/v1/inventory/sync
 
-Triggers manual sync.
+Triggers a manual sync outside the scheduled cron job.
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/inventory/sync
-```
-
----
-
-## How to Test the API
-
-You can test the API using curl or Postman.
-
-Example workflow:
-
-1. Trigger a manual sync:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/inventory/sync
-```
-
-2. Retrieve products:
-
-```bash
-curl http://localhost:8080/api/v1/inventory
-```
-
-3. Apply filters:
-
-```bash
-curl "http://localhost:8080/api/v1/inventory?minRating=4.0"
-```
-
-4. Restock products with zero stock:
-
-```bash
-curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
-  -H "Content-Type: application/json" \
-  -d '{"newStock": 10}'
 ```
 
 ---
@@ -164,53 +162,27 @@ curl -X PATCH http://localhost:8080/api/v1/inventory/restock-zeros \
 
 ### Idempotent Sync Strategy
 
-The synchronization process ensures no duplicate records by using a unique internalId.
-
-* Existing products → updated
-* New products → inserted
-
-This ensures the sync process is safe to run multiple times without side effects.
-
----
+Each product gets a unique `internalId` (`FS_{id}` for ProviderA, `DJ_{id}` for ProviderB). On every sync, existing records are updated and new ones are inserted, making the process safe to run multiple times.
 
 ### Dynamic Filtering (JPA Specifications)
 
-Filtering is executed at database level using JpaSpecificationExecutor, avoiding in-memory processing.
+Filters are applied using `JpaSpecificationExecutor`, pushing all filtering logic to the database query. No in-memory Stream filtering.
 
----
+### Parallel Processing with Dedicated Executor
 
-### Parallel Processing
-
-Used CompletableFuture to call providers concurrently, reducing execution time.
-
----
+Both providers are called concurrently using `CompletableFuture.runAsync()` with a fixed thread pool of 2 threads, avoiding contention with the common ForkJoinPool.
 
 ### Resilience (Graceful Degradation)
 
-Failures are handled using exceptionally(), allowing the system to continue processing.
+Each provider call is wrapped with `.exceptionally()`, so if one provider fails the other continues processing normally.
 
----
+### Bulk Restock Efficiency
 
-### Database Efficiency
-
-Bulk updates (restock) use @Modifying queries directly in the database.
-
----
-
-### Canonical ID Strategy
-
-* Provider A → FS_{id}
-* Provider B → DJ_{id}
-
----
+The restock endpoint uses a `@Modifying` + `@Transactional` JPQL query, updating all zero-stock products in a single database operation instead of fetching and saving each one individually.
 
 ### Audit Handling
 
-Provider A does not provide stock:
-
-* Default = 0
-* auditStock = true
-* Logged for traceability
+Provider A does not include stock data. The system defaults to 0 and sets `auditStock = true` for traceability.
 
 ---
 
@@ -219,16 +191,6 @@ Provider A does not provide stock:
 * External provider APIs may fail intermittently
 * Product IDs are unique within each provider
 * Data consistency is prioritized over real-time synchronization
-
----
-
-## Design Principles
-
-* Separation of concerns
-* Resilient system design
-* Idempotent data processing
-* Scalable querying strategy
-* Clean architecture
 
 ---
 
@@ -242,17 +204,13 @@ mvn clean test
 
 ## Future Improvements
 
-* Swagger / OpenAPI
-* Redis caching
-* CI/CD (GitHub Actions)
-* Kafka
-* Integration tests
+* Redis caching for frequently queried filters
+* CI/CD pipeline with GitHub Actions
+* Integration tests with Testcontainers
 
 ---
 
 ## Project Structure
-
-```
 src/main/java/com/supplychain/homologator/inventorysyncapi/
 ├── client/
 ├── config/
@@ -262,4 +220,3 @@ src/main/java/com/supplychain/homologator/inventorysyncapi/
 ├── exception/
 ├── repository/
 └── service/
-```

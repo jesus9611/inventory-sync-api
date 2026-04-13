@@ -1,0 +1,192 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m-----------< [0;36mcom.supplychain.homologator:inventory-sync-api[0;1m >-----------[m
+[[1;34mINFO[m] [1mBuilding inventory-sync-api 0.0.1-SNAPSHOT[m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.3.1:resources[m [1m(default-resources)[m @ [36minventory-sync-api[0;1m ---[m
+[[1;34mINFO[m] Copying 3 resources from src/main/resources to target/classes
+[[1;34mINFO[m] Copying 0 resource from src/main/resources to target/classes
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.14.1:compile[m [1m(default-compile)[m @ [36minventory-sync-api[0;1m ---[m
+[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:3.3.1:testResources[m [1m(default-testResources)[m @ [36minventory-sync-api[0;1m ---[m
+[[1;34mINFO[m] skip non existing resourceDirectory /home/jesus/Documentos/Trabajo /inventory-sync-api/src/test/resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.14.1:testCompile[m [1m(default-testCompile)[m @ [36minventory-sync-api[0;1m ---[m
+[[1;34mINFO[m] Nothing to compile - all classes are up to date.
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-surefire-plugin:3.5.5:test[m [1m(default-test)[m @ [36minventory-sync-api[0;1m ---[m
+[[1;34mINFO[m] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[[1;34mINFO[m] 
+[[1;34mINFO[m] -------------------------------------------------------
+[[1;34mINFO[m]  T E S T S
+[[1;34mINFO[m] -------------------------------------------------------
+[[1;34mINFO[m] Running com.supplychain.homologator.inventorysyncapi.[1mInventoryServiceTest[m
+16:51:04.944 [main] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Starting inventory sync at 2026-04-12T16:51:04.943254630
+16:51:04.959 [main] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Inventory sync completed at 2026-04-12T16:51:04.959005738
+16:51:04.998 [main] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Starting inventory sync at 2026-04-12T16:51:04.998488607
+16:51:04.999 [ForkJoinPool.commonPool-worker-2] WARN com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Product FS_1 has no real stock, defaulting to 0
+16:51:05.005 [ForkJoinPool.commonPool-worker-2] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Saved 1 products from FakeStore
+16:51:05.006 [main] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Inventory sync completed at 2026-04-12T16:51:05.005988228
+16:51:05.051 [main] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Starting inventory sync at 2026-04-12T16:51:05.051102658
+16:51:05.052 [ForkJoinPool.commonPool-worker-2] WARN com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Product FS_1 has no real stock, defaulting to 0
+16:51:05.052 [ForkJoinPool.commonPool-worker-2] WARN com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Product FS_2 has no real stock, defaulting to 0
+16:51:05.053 [ForkJoinPool.commonPool-worker-2] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Saved 2 products from FakeStore
+16:51:05.053 [main] INFO com.supplychain.homologator.inventorysyncapi.service.InventoryService -- Inventory sync completed at 2026-04-12T16:51:05.053596196
+[[1;31mERROR[m] [1;31mTests [0;1mrun: [0;1m3[m, [1;31mFailures: [0;1;31m2[m, Errors: 0, Skipped: 0, Time elapsed: 1.314 s[1;31m <<< FAILURE![m -- in com.supplychain.homologator.inventorysyncapi.[1mInventoryServiceTest[m
+[[1;31mERROR[m] com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsFromBothProviders -- Time elapsed: 0.048 s <<< FAILURE!
+Wanted but not invoked:
+productRepository.saveAll(<any List>);
+-> at com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsFromBothProviders(InventoryServiceTest.java:78)
+
+However, there were exactly 2 interactions with this mock:
+productRepository.findByInternalId("FS_1");
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.saveOrUpdateProducts(InventoryService.java:135)
+
+productRepository.save(
+    Product(internalId=FS_1, title=Product 1, description=desc, price=10.0, rating=4.5, stock=0, category=cat, provider=ProviderA, lastSync=2026-04-12T16:51:05.001328478, auditStock=true)
+);
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.lambda$saveOrUpdateProducts$3(InventoryService.java:145)
+
+
+	at com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsFromBothProviders(InventoryServiceTest.java:78)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[[1;31mERROR[m] com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsWhenProductsExist -- Time elapsed: 0.012 s <<< FAILURE!
+Wanted but not invoked:
+productRepository.saveAll(<any List>);
+-> at com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsWhenProductsExist(InventoryServiceTest.java:51)
+
+However, there were exactly 4 interactions with this mock:
+productRepository.findByInternalId("FS_1");
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.saveOrUpdateProducts(InventoryService.java:135)
+
+productRepository.save(
+    Product(internalId=FS_1, title=Product 1, description=desc, price=10.0, rating=4.5, stock=0, category=cat, provider=ProviderA, lastSync=2026-04-12T16:51:05.052494751, auditStock=true)
+);
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.lambda$saveOrUpdateProducts$3(InventoryService.java:145)
+
+productRepository.findByInternalId("FS_2");
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.saveOrUpdateProducts(InventoryService.java:135)
+
+productRepository.save(
+    Product(internalId=FS_2, title=Product 2, description=desc, price=20.0, rating=4.0, stock=0, category=cat, provider=ProviderA, lastSync=2026-04-12T16:51:05.052659072, auditStock=true)
+);
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.lambda$saveOrUpdateProducts$3(InventoryService.java:145)
+
+
+	at com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsWhenProductsExist(InventoryServiceTest.java:51)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[[1;34mINFO[m] Running com.supplychain.homologator.inventorysyncapi.[1mInventoryControllerTest[m
+16:51:05.133 [main] INFO com.supplychain.homologator.inventorysyncapi.controller.InventoryController -- PATCH /api/v1/inventory/restock-zeros - newStock=10
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m1[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.144 s -- in com.supplychain.homologator.inventorysyncapi.[1mInventoryControllerTest[m
+[[1;34mINFO[m] Running com.supplychain.homologator.inventorysyncapi.[1mInventorySyncApiApplicationTests[m
+16:51:05.330 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.supplychain.homologator.inventorysyncapi.InventorySyncApiApplicationTests]: InventorySyncApiApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:51:05.475 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.supplychain.homologator.inventorysyncapi.InventorySyncApiApplication for test class com.supplychain.homologator.inventorysyncapi.InventorySyncApiApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.13)
+
+2026-04-12T16:51:05.907-06:00  INFO 13147 --- [inventory-sync-api] [           main] c.s.h.i.InventorySyncApiApplicationTests : Starting InventorySyncApiApplicationTests using Java 21.0.10 with PID 13147 (started by jesus in /home/jesus/Documentos/Trabajo /inventory-sync-api)
+2026-04-12T16:51:05.909-06:00  INFO 13147 --- [inventory-sync-api] [           main] c.s.h.i.InventorySyncApiApplicationTests : The following 1 profile is active: "local"
+2026-04-12T16:51:06.842-06:00  INFO 13147 --- [inventory-sync-api] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-12T16:51:06.896-06:00  INFO 13147 --- [inventory-sync-api] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 44 ms. Found 1 JPA repository interface.
+2026-04-12T16:51:07.506-06:00  INFO 13147 --- [inventory-sync-api] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-12T16:51:07.548-06:00  INFO 13147 --- [inventory-sync-api] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.45.Final
+2026-04-12T16:51:07.574-06:00  INFO 13147 --- [inventory-sync-api] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-12T16:51:07.675-06:00  INFO 13147 --- [inventory-sync-api] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-12T16:51:07.698-06:00  INFO 13147 --- [inventory-sync-api] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-12T16:51:07.830-06:00  INFO 13147 --- [inventory-sync-api] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:inventorydb user=SA
+2026-04-12T16:51:07.831-06:00  INFO 13147 --- [inventory-sync-api] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-12T16:51:07.849-06:00  WARN 13147 --- [inventory-sync-api] [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-12T16:51:07.865-06:00  INFO 13147 --- [inventory-sync-api] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 2.3.232
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-04-12T16:51:08.534-06:00  INFO 13147 --- [inventory-sync-api] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: create table products (internal_id varchar(255) not null, audit_stock boolean, category varchar(255), description varchar(1000), last_sync timestamp(6), price float(53), provider varchar(255), rating float(53), stock integer, title varchar(255), primary key (internal_id))
+2026-04-12T16:51:08.580-06:00  INFO 13147 --- [inventory-sync-api] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-12T16:51:08.896-06:00  INFO 13147 --- [inventory-sync-api] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-12T16:51:09.598-06:00  WARN 13147 --- [inventory-sync-api] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-04-12T16:51:10.049-06:00  INFO 13147 --- [inventory-sync-api] [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:inventorydb'
+2026-04-12T16:51:10.218-06:00  INFO 13147 --- [inventory-sync-api] [           main] c.s.h.i.InventorySyncApiApplicationTests : Started InventorySyncApiApplicationTests in 4.606 seconds (process running for 7.232)
+[[1;34mINFO[m] [1;32mTests run: [0;1;32m1[m, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.019 s -- in com.supplychain.homologator.inventorysyncapi.[1mInventorySyncApiApplicationTests[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] Results:
+[[1;34mINFO[m] 
+[[1;31mERROR[m] [1;31mFailures: [m
+[[1;31mERROR[m] [1;31m  InventoryServiceTest.shouldPersistProductsFromBothProviders:78 
+Wanted but not invoked:
+productRepository.saveAll(<any List>);
+-> at com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsFromBothProviders(InventoryServiceTest.java:78)
+
+However, there were exactly 2 interactions with this mock:
+productRepository.findByInternalId("FS_1");
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.saveOrUpdateProducts(InventoryService.java:135)
+
+productRepository.save(
+    Product(internalId=FS_1, title=Product 1, description=desc, price=10.0, rating=4.5, stock=0, category=cat, provider=ProviderA, lastSync=2026-04-12T16:51:05.001328478, auditStock=true)
+);
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.lambda$saveOrUpdateProducts$3(InventoryService.java:145)
+
+[m
+[[1;31mERROR[m] [1;31m  InventoryServiceTest.shouldPersistProductsWhenProductsExist:51 
+Wanted but not invoked:
+productRepository.saveAll(<any List>);
+-> at com.supplychain.homologator.inventorysyncapi.InventoryServiceTest.shouldPersistProductsWhenProductsExist(InventoryServiceTest.java:51)
+
+However, there were exactly 4 interactions with this mock:
+productRepository.findByInternalId("FS_1");
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.saveOrUpdateProducts(InventoryService.java:135)
+
+productRepository.save(
+    Product(internalId=FS_1, title=Product 1, description=desc, price=10.0, rating=4.5, stock=0, category=cat, provider=ProviderA, lastSync=2026-04-12T16:51:05.052494751, auditStock=true)
+);
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.lambda$saveOrUpdateProducts$3(InventoryService.java:145)
+
+productRepository.findByInternalId("FS_2");
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.saveOrUpdateProducts(InventoryService.java:135)
+
+productRepository.save(
+    Product(internalId=FS_2, title=Product 2, description=desc, price=20.0, rating=4.0, stock=0, category=cat, provider=ProviderA, lastSync=2026-04-12T16:51:05.052659072, auditStock=true)
+);
+-> at com.supplychain.homologator.inventorysyncapi.service.InventoryService.lambda$saveOrUpdateProducts$3(InventoryService.java:145)
+
+[m
+[[1;34mINFO[m] 
+[[1;31mERROR[m] [1;31mTests run: 5, Failures: 2, Errors: 0, Skipped: 0[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;31mBUILD FAILURE[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  8.939 s
+[[1;34mINFO[m] Finished at: 2026-04-12T16:51:10-06:00
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-surefire-plugin:3.5.5:test[m [1m(default-test)[m on project [36minventory-sync-api[m: [1;31mThere are test failures.[m
+[[1;31mERROR[m] [1;31m[m
+[[1;31mERROR[m] [1;31mSee /home/jesus/Documentos/Trabajo /inventory-sync-api/target/surefire-reports for the individual test results.[m
+[[1;31mERROR[m] [1;31mSee dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.[m
+[[1;31mERROR[m] -> [1m[Help 1][m
+[[1;31mERROR[m] 
+[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
+[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

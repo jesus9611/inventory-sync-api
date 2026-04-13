@@ -10,9 +10,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.Collections;
 import java.util.List;
-import static org.mockito.ArgumentMatchers.anyList;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +35,7 @@ class InventoryServiceTest {
 
     @Test
     void shouldPersistProductsWhenProductsExist() {
+
         List<FakeStoreProductDTO> products = List.of(
                 new FakeStoreProductDTO(
                         1L, "Product 1", "desc", 10.0, "cat", "image-url",
@@ -46,23 +50,30 @@ class InventoryServiceTest {
         when(fakeStoreClient.fetchProducts()).thenReturn(products);
         when(dummyJsonClient.fetchProducts()).thenReturn(Collections.emptyList());
 
+        // Simula que no existen en DB (para que haga save)
+        when(productRepository.findByInternalId(any()))
+                .thenReturn(Optional.empty());
+
         inventoryService.syncInventory();
 
-        verify(productRepository).saveAll(anyList());
+        // Ahora validamos save(), NO saveAll()
+        verify(productRepository, atLeastOnce()).save(any());
     }
 
     @Test
     void shouldNotPersistWhenNoProducts() {
+
         when(fakeStoreClient.fetchProducts()).thenReturn(Collections.emptyList());
         when(dummyJsonClient.fetchProducts()).thenReturn(Collections.emptyList());
 
         inventoryService.syncInventory();
 
-        verify(productRepository, never()).saveAll(anyList());
+        verify(productRepository, never()).save(any());
     }
 
     @Test
     void shouldPersistProductsFromBothProviders() {
+
         List<FakeStoreProductDTO> fakeProducts = List.of(
                 new FakeStoreProductDTO(
                         1L, "Product 1", "desc", 10.0, "cat", "img",
@@ -73,8 +84,11 @@ class InventoryServiceTest {
         when(fakeStoreClient.fetchProducts()).thenReturn(fakeProducts);
         when(dummyJsonClient.fetchProducts()).thenReturn(Collections.emptyList());
 
+        when(productRepository.findByInternalId(any()))
+                .thenReturn(Optional.empty());
+
         inventoryService.syncInventory();
 
-        verify(productRepository, atLeastOnce()).saveAll(anyList());
+        verify(productRepository, atLeastOnce()).save(any());
     }
 }

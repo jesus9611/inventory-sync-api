@@ -26,21 +26,23 @@ public class InventoryService {
     private final ProductRepository productRepository;
     private final FakeStoreClient fakeStoreClient;
     private final DummyJsonClient dummyJsonClient;
+    private final java.util.concurrent.Executor syncExecutor =
+        java.util.concurrent.Executors.newFixedThreadPool(2);
 
     
     @Scheduled(cron = "0 */10 * * * *")
     public void syncInventory() {
         log.info("Starting inventory sync at {}", LocalDateTime.now());
         
-        CompletableFuture<Void> fakeStoreSync = CompletableFuture
-        .runAsync(this::syncFromFakeStore)
+       CompletableFuture<Void> fakeStoreSync = CompletableFuture
+        .runAsync(this::syncFromFakeStore, syncExecutor)
         .exceptionally(ex -> {
             log.error("Error syncing FakeStore: {}", ex.getMessage());
             return null;
         });
-
-CompletableFuture<Void> dummyJsonSync = CompletableFuture
-        .runAsync(this::syncFromDummyJSON)
+        
+        CompletableFuture<Void> dummyJsonSync = CompletableFuture
+        .runAsync(this::syncFromDummyJSON, syncExecutor)
         .exceptionally(ex -> {
             log.error("Error syncing DummyJSON: {}", ex.getMessage());
             return null;
@@ -76,7 +78,7 @@ CompletableFuture<Void> dummyJsonSync = CompletableFuture
     }
     
     private Product mapFakeStoreToProduct(FakeStoreProductDTO dto) {
-        log.warn("Product FS_{} has no real stock, defaulting to 0", dto.id());
+        log.debug("Product FS_{} has no real stock, defaulting to 0", dto.id());
 
         return Product.builder()
                 .internalId("FS_" + dto.id())
